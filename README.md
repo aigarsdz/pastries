@@ -19,8 +19,9 @@ managers with the simplicity of copy-pasting code:
 
 ### Installation
 
-Download the executable file and put it in a directory that is in your PATH
-variable.
+Download the appropriate executable file from
+[releases](https://github.com/aigarsdz/pastries/releases), rename it to `pastries`
+and put it in a directory that is in your PATH variable.
 
 ### Usage
 
@@ -44,18 +45,18 @@ pastries add --name package_name --uri './shared/local/file.js' --path './src/pa
   `always`, `never` and `on_change`. The default is `on_change` which means the
   dependency will be updated if the source and the target files are different.
 
-  Updating a dependency.
+Updating a dependency.
 
-  ```bash
-  pastries update
+```bash
+pastries update
 
-  pastries update all
+pastries update all
 
-  pastries update package_name
-  ```
+pastries update package_name
+```
 
-  Removing a dependency.
+Removing a dependency.
 
-  ```bash
-  pastries remove package_name
-  ```
+```bash
+pastries remove package_name
+```
