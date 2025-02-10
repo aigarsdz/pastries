@@ -1,3 +1,7 @@
+<div align="center"">
+  <img src="pastries.webp" alt="Two cupcakes" width="250">
+</div>
+
 ## Pastries
 
 Have you ever seen a package or library in which all functionality is contained
