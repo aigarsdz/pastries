@@ -6,6 +6,7 @@ mod table;
 
 use clap::Parser;
 use command::{Arguments, Command};
+use colored::Colorize;
 use dependency_manager::{AddResult, UpdateResult};
 
 #[tokio::main]
@@ -21,14 +22,16 @@ async fn main() {
                     configuration.add_dependency(&name, &uri, &path, &local, &update);
                     configuration_manager::update_configuration_file(configuration).expect("Failed to save the configuration file");
 
-                    println!("Added\n  Source: {}\n  File: {}", uri, path);
+                    println!("\n{} {} {} {} from {}\n", "[Added]".green(), name, "to".bold(), path.italic(), uri.italic());
                 },
                 AddResult::Failed(error) => {
-                    println!("Failed\n  Source: {}\n  File: {}\n\n{}", uri, path, error);
+                    println!("\n{} {} {} {} from {}\n\n{}\n", "[Failed]".red(), name, "to".bold(), path.italic(), uri.italic(), error);
                 }
             }
         },
         Command::Update { name } => {
+            println!("");
+
             for dependency in configuration.dependencies {
                 if name != "all" && dependency.name != name {
                     continue;
@@ -37,11 +40,13 @@ async fn main() {
                 let result = dependency_manager::update_dependency(&dependency).await;
 
                 match result {
-                    UpdateResult::Updated => println!("Updated\n  Source: {}\n  File: {}", dependency.uri, dependency.path),
-                    UpdateResult::Failed => println!("Failed\n  Source: {}\n  File: {}", dependency.uri, dependency.path),
-                    UpdateResult::Ignored => ()
+                    UpdateResult::Updated => println!("{} {} {}", "[Updated]".green(), dependency.name, dependency.path.italic()),
+                    UpdateResult::Failed => println!("{} {} {}", "[Failed]".red(), dependency.name, dependency.path.italic()),
+                    UpdateResult::Ignored => println!("{} {} {}", "[Ignored]".cyan(), dependency.name, dependency.path.italic())
                 };
             }
+
+            println!("");
         },
         Command::Remove { name } => {
             if let Some(dependency) = configuration.remove_dependency(&name) {
@@ -50,15 +55,17 @@ async fn main() {
                 dependency_manager::remove_dependency(&dependency).expect(&error_message);
                 configuration_manager::update_configuration_file(configuration).expect("Failed to save the configuration file");
 
-                println!("Removed dependency {}\nDeleted file {}", name, dependency.path);
+                println!("\n{} {} {}\n", "[Removed]".green(), name, dependency.path.italic());
             } else {
-                println!("A dependency with a name {} does not exist.", name);
+                println!("\nA dependency with a name {} does not exist.\n", name);
             }
         },
         Command::List => {
-            let rows = configuration.dependencies.iter().map(|dependency| vec![dependency.name.as_str(), dependency.path.as_str()]).collect();
+            let rows = configuration.dependencies.iter().map(
+                |dependency| vec![dependency.name.as_str(), dependency.path.as_str(), dependency.uri.as_str()]
+            ).collect();
 
-            table::draw(vec!["Name", "File path"], rows);
+            table::draw(vec!["Name", "File path", "Source"], rows);
         }
     }
 }
