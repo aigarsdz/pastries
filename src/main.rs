@@ -6,7 +6,7 @@ mod table;
 
 use clap::Parser;
 use command::{Arguments, Command};
-use dependency_manager::UpdateResult;
+use dependency_manager::{AddResult, UpdateResult};
 
 #[tokio::main]
 async fn main() {
@@ -16,20 +16,17 @@ async fn main() {
 
     match arguments.command {
         Command::Add { name, uri, path, local, update } => {
-            if local {
-                let error_message = format!("Failed to copy file {}", uri);
+            match dependency_manager::add_dependency(&uri, &path, local).await {
+                AddResult::Added => {
+                    configuration.add_dependency(&name, &uri, &path, &local, &update);
+                    configuration_manager::update_configuration_file(configuration).expect("Failed to save the configuration file");
 
-                dependency_manager::install_local_dependency(&uri, &path).expect(&error_message);
-            } else {
-                let error_message = format!("Failed to download file {}", uri);
-
-                dependency_manager::install_remote_dependency(&uri, &path).await.expect(&error_message);
+                    println!("Added\n  Source: {}\n  File: {}", uri, path);
+                },
+                AddResult::Failed(error) => {
+                    println!("Failed\n  Source: {}\n  File: {}\n\n{}", uri, path, error);
+                }
             }
-
-            configuration.add_dependency(&name, &uri, &path, &local, &update);
-            configuration_manager::update_configuration_file(configuration).expect("Failed to save the configuration file");
-
-            println!("Added\n  Source: {}\n  File: {}", uri, path);
         },
         Command::Update { name } => {
             for dependency in configuration.dependencies {
